@@ -1,0 +1,11 @@
+n_objects: 4
+object_names: ["object_1", "object_2", "object_3", "object_4"]
+m_rounds: 5
+p_fraction: "1/4"
+q_fraction: "1/2"
+valuation_range: [-10, 10]
+theta_values:
+  competitive: 0.0
+  cooperative: 3.14159
+  mixed: 1.5708
+score_threshold: 5
