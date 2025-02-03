@@ -5,11 +5,6 @@ import openai
 import re
 from pathlib import Path
 from dotenv import load_dotenv
-
-import sys
-script_dir = Path(__file__).parent.parent
-sys.path.append(str(script_dir))
-
 from utils.valuation_generation import generate_valuations
 from utils.prompt_templates import create_system_prompt
 
@@ -25,7 +20,7 @@ P_FRACTION = "1/4"
 Q_FRACTION = "1/2"
 BASE_RANGE = (-10, 10)
 SCORE_THRESHOLD = 5
-NUM_TRANSCRIPTS = 10  # per dataset
+NUM_TRANSCRIPTS = 10
 
 def parse_claims(claim_text):
     numbers = re.findall(r'\d+', claim_text)
