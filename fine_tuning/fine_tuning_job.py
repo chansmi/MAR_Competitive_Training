@@ -1,9 +1,13 @@
 import openai
 
-# Set your OpenAI API key
+# Set your OpenAI API key (ideally load this from an environment variable)
 openai.api_key = "YOUR_OPENAI_API_KEY"
 
-def create_finetuning_job(training_file_id):
+def create_finetuning_job(training_file_id: str) -> None:
+    """
+    Creates a supervised fine-tuning job for the specified model using
+    the training file identified by training_file_id.
+    """
     response = openai.FineTuning.jobs.create(
         training_file=training_file_id,
         model="gpt-4o-mini-2024-07-18",
@@ -18,6 +22,6 @@ def create_finetuning_job(training_file_id):
     print(response)
 
 if __name__ == '__main__':
-    # Example: assume you've already uploaded your training file and have its file ID.
-    training_file_id = "file-abc123"  # Replace with your actual file ID
+    # Replace with your actual training file ID (from your upload step)
+    training_file_id = "file-abc123"
     create_finetuning_job(training_file_id)
