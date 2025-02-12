@@ -48,8 +48,8 @@ def compute_cosine_similarity(v1, v2):
 def compute_payoffs(v1, v2, claims_agent1, claims_agent2, p=0.25, q=0.5):
     """
     Compute raw payoffs over all objects, then discretize the outcome:
-      - If agent1's raw payoff > agent2's, the discrete outcome is (1, -1)
-      - If agent1's raw payoff < agent2's, the discrete outcome is (-1, 1)
+      - If agent1's raw payoff > agent2's, discrete outcome is (1, -1)
+      - If agent1's raw payoff < agent2's, discrete outcome is (-1, 1)
       - Otherwise, (0, 0)
     Returns:
       (discrete_payoff_agent1, discrete_payoff_agent2, raw_payoff_agent1, raw_payoff_agent2)
@@ -252,9 +252,9 @@ def main():
             file_path.write_text("")
 
     # Use a ThreadPoolExecutor to parallelize transcript generation.
-    max_workers = 8  # Adjust as needed.
-    futures = []  # Initialize as a list.
+    max_workers = 8  # Adjust the number of threads as needed.
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = []
         # Continuously submit tasks until targets are met.
         while True:
             if args.category != "all":
@@ -263,12 +263,9 @@ def main():
             else:
                 if all(counts[cat] >= target for cat in counts):
                     break
-
             futures.append(executor.submit(generate_single_transcript))
-            # Wait for at least one future to complete.
-            done, not_done = concurrent.futures.wait(futures, timeout=1, return_when=concurrent.futures.FIRST_COMPLETED)
-            # Reassign futures to the list of not-done tasks.
-            futures = list(not_done)
+            # Process completed futures.
+            done, futures = concurrent.futures.wait(futures, timeout=1, return_when=concurrent.futures.FIRST_COMPLETED)
             for future in done:
                 result = future.result()
                 if result is None:
@@ -276,6 +273,7 @@ def main():
                 label, transcript, cos_sim, metadata, raw1, raw2 = result
                 if args.category != "all" and label != args.category:
                     continue
+                # Save the transcript.
                 save_transcript(label, transcript, cos_sim, metadata)
                 if args.category != "all":
                     counts[args.category] += 1
