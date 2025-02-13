@@ -9,6 +9,9 @@ def clean_messages(messages: list) -> list:
         except for the final such message (the final claim) which gets weight 1.
       - For each assistant message from agent2, assign weight 0.
     Other messages are left unchanged.
+    
+    After assigning the weights, the "speaker" key is removed because
+    extra keys (such as "speaker") are not permitted in the training file.
     """
     # Identify indices for agent1 assistant messages
     agent1_indices = [
@@ -25,6 +28,9 @@ def clean_messages(messages: list) -> list:
                 new_msg["weight"] = 1 if i == last_agent1_index else 0.5
             elif new_msg.get("speaker") == "agent2":
                 new_msg["weight"] = 0
+        # Remove the "speaker" key as it's not allowed in the training file.
+        if "speaker" in new_msg:
+            del new_msg["speaker"]
         cleaned.append(new_msg)
     return cleaned
 
