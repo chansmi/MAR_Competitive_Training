@@ -200,11 +200,16 @@ def main():
     args = parser.parse_args()
     
     models = {
-        #"baseline": "gpt-4o-mini-2024-07-18",
-        "competitive": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250213-1343:B0Yg8mBH",
-        "cooperative": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:cooperative-ft-20250213-1343:B0YdG6xe",
-        "mixed": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250213-1343:B0Yg8mBH",
+        "baseline": "gpt-4o-mini-2024-07-18",
+        "competitive": "ft:gpt-4o-mini-2024-07-18:neural-interactive-proofs:conflict-ft-20250213-1518:B0a8c774",
+        "cooperative": "ft:gpt-4o-mini-2024-07-18:neural-interactive-proofs:cooperative-ft-20250213-1518:B0a7nLB7",
+        "mixed": "ft:gpt-4o-mini-2024-07-18:neural-interactive-proofs:mixed-ft-20250213-1518:B0aBWOlT",
     }
+
+        #    "baseline": "gpt-4o-mini-2024-07-18",
+        # "competitive": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250213-1343:B0Yg8mBH",
+        # "cooperative": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:cooperative-ft-20250213-1343:B0YdG6xe",
+        # "mixed": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250213-1343:B0Yg8mBH",
     
     evaluation_results = {}
     

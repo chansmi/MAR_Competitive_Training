@@ -1,159 +1,122 @@
-from pathlib import Path
+#!/usr/bin/env python3
 import json
 import argparse
-import pandas as pd
-import numpy as np
+from collections import defaultdict
+import statistics
 
-def load_evaluation_data(file_path: Path) -> pd.DataFrame:
-    """
-    Load a single aggregated evaluation JSON file and flatten the records.
-    """
-    with file_path.open("r") as f:
-        data = json.load(f)
-    records = []
-    for eval_type, scenarios in data.items():
-        for sc in scenarios:
-            # Unpack raw and discrete payoffs into separate columns.
-            if "raw_payoffs" in sc:
-                sc["raw_agent1"] = sc["raw_payoffs"][0]
-                sc["raw_agent2"] = sc["raw_payoffs"][1]
-            if "discrete_payoffs" in sc:
-                sc["discrete_agent1"] = sc["discrete_payoffs"][0]
-                sc["discrete_agent2"] = sc["discrete_payoffs"][1]
-            sc["evaluation_type"] = eval_type
-            records.append(sc)
-    return pd.DataFrame(records)
+def analyze_scenarios(file_path):
+    overall_payoffs = defaultdict(list)
+    label_payoffs = defaultdict(lambda: defaultdict(list))
+    scenario_count = 0
 
-def load_evaluation_data_from_folder(folder: Path) -> pd.DataFrame:
-    """
-    Search all subfolders of the given folder for aggregated_results.json files
-    and return a combined DataFrame with a 'run_id' field.
-    """
-    records = []
-    for aggregated_file in folder.glob("*/aggregated_results.json"):
-        run_id = aggregated_file.parent.name
-        with aggregated_file.open("r") as f:
+    # Try to load the file as an aggregated JSON object.
+    try:
+        with open(file_path, 'r') as f:
             data = json.load(f)
-        for eval_type, scenarios in data.items():
-            for sc in scenarios:
-                if "raw_payoffs" in sc:
-                    sc["raw_agent1"] = sc["raw_payoffs"][0]
-                    sc["raw_agent2"] = sc["raw_payoffs"][1]
-                if "discrete_payoffs" in sc:
-                    sc["discrete_agent1"] = sc["discrete_payoffs"][0]
-                    sc["discrete_agent2"] = sc["discrete_payoffs"][1]
-                sc["evaluation_type"] = eval_type
-                sc["run_id"] = run_id
-                records.append(sc)
-    return pd.DataFrame(records)
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from file: {e}")
+        return overall_payoffs, label_payoffs, scenario_count
 
-def analyze_data(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute comprehensive summary statistics to investigate negotiation efficiency.
+    # Determine if the file is an aggregated JSON (dict with lists) or a single list.
+    scenarios = []
+    if isinstance(data, list):
+        scenarios = data
+    elif isinstance(data, dict):
+        # Iterate over keys; if the value is a list, add its elements.
+        for key, value in data.items():
+            if isinstance(value, list):
+                scenarios.extend(value)
+            else:
+                print(f"Skipping key '{key}' since its value is not a list.")
+    else:
+        print("Unknown data format in JSON file.")
+        return overall_payoffs, label_payoffs, scenario_count
 
-    Additional computed columns:
-    - raw_diff: difference in raw outcomes between agent1 and agent2.
-    - social_welfare: sum of both agents' raw payoffs.
-    - win_diff: difference between the discrete outcomes (win: 1, loss: -1, tie: 0).
-    
-    Aggregated metrics include:
-    - Count of scenarios.
-    - Mean and standard deviation for raw payoffs, payoff differences, and social welfare.
-    - Total wins for each agent.
-    - Average cosine similarity.
-    """
-    df["raw_diff"] = df["raw_agent1"] - df["raw_agent2"]
-    df["social_welfare"] = df["raw_agent1"] + df["raw_agent2"]
-    # Compute win difference per scenario: if agent1 wins then (1 - (-1)) = 2, if agent2 wins then (-1 - 1) = -2, 0 for tie.
-    df["win_diff"] = df["discrete_agent1"] - df["discrete_agent2"]
+    # Process each scenario.
+    for scenario in scenarios:
+        if not isinstance(scenario, dict):
+            print(f"Skipping non-dictionary scenario: {scenario}")
+            continue
 
-    # Group by run_id, evaluation_type, and label.
-    summary = df.groupby(["run_id", "evaluation_type", "label"]).agg(
-        count=("scenario_id", "count"),
-        mean_raw_agent1=("raw_agent1", "mean"),
-        std_raw_agent1=("raw_agent1", "std"),
-        mean_raw_agent2=("raw_agent2", "mean"),
-        std_raw_agent2=("raw_agent2", "std"),
-        mean_raw_diff=("raw_diff", "mean"),
-        std_raw_diff=("raw_diff", "std"),
-        mean_social_welfare=("social_welfare", "mean"),
-        std_social_welfare=("social_welfare", "std"),
-        win_agent1_count=("discrete_agent1", lambda x: (x == 1).sum()),
-        win_agent2_count=("discrete_agent1", lambda x: (x == -1).sum()),
-        mean_win_diff=("win_diff", "mean"),
-        std_win_diff=("win_diff", "std"),
-        avg_cosine_sim=("cosine_similarity", "mean")
-    ).reset_index()
-    
-    return summary
+        label = scenario.get("label", "unknown")
+        models = scenario.get("model_pair", [])
+        payoffs = scenario.get("raw_payoffs", [])
 
-def additional_analysis(df: pd.DataFrame):
-    """
-    Perform additional analysis to compare negotiation efficiency metrics.
-    This includes evaluating average social welfare and win differences
-    across evaluation types and play styles (self-play vs cross-play), and
-    computing correlations between efficiency measures.
-    """
-    # Pivot table: average social welfare for each evaluation type.
-    pivot_sw = pd.pivot_table(df, values="social_welfare", index="evaluation_type", aggfunc=[np.mean, np.std, len])
-    print("Social Welfare by Evaluation Type:")
-    print(pivot_sw)
+        # Ensure that we have the expected types.
+        if not isinstance(models, list) or not isinstance(payoffs, list):
+            print(f"Skipping scenario {scenario.get('scenario_id', 'unknown')} because 'model_pair' or 'raw_payoffs' is not a list.")
+            continue
+
+        # Zip models and payoffs and record the data.
+        for model, payoff in zip(models, payoffs):
+            if not isinstance(model, str):
+                print(f"Skipping invalid model entry: {model}")
+                continue
+            try:
+                payoff = float(payoff)
+            except (ValueError, TypeError):
+                print(f"Skipping invalid payoff: {payoff}")
+                continue
+            overall_payoffs[model].append(payoff)
+            label_payoffs[label][model].append(payoff)
+        scenario_count += 1
+
+    return overall_payoffs, label_payoffs, scenario_count
+
+def print_narrative(overall_payoffs, label_payoffs, scenario_count):
+    print("Cross-Play Analysis Report")
+    print("===========================")
+    print(f"Total scenarios analyzed: {scenario_count}\n")
     
-    # Pivot table: average win difference (agent1 win - agent2 win) by evaluation type.
-    pivot_win = pd.pivot_table(df, values="win_diff", index="evaluation_type", aggfunc=[np.mean, np.std, len])
-    print("\nWin Difference (agent1 win minus agent2 win) by Evaluation Type:")
-    print(pivot_win)
+    # Compute average payoffs for each model overall.
+    avg_payoffs = {}
+    print("Overall Average Payoffs per Model:")
+    for model, payoffs in overall_payoffs.items():
+        avg = sum(payoffs) / len(payoffs)
+        avg_payoffs[model] = avg
+        stdev = statistics.stdev(payoffs) if len(payoffs) > 1 else 0.0
+        print(f"  Model: {model}")
+        print(f"    Scenarios participated: {len(payoffs)}")
+        print(f"    Average raw payoff: {avg:.3f}")
+        print(f"    Standard deviation: {stdev:.3f}\n")
     
-    # Correlation between raw difference and social welfare
-    corr = df[["raw_diff", "social_welfare"]].corr()
-    print("\nCorrelation between Payoff Imbalance (raw_diff) and Social Welfare:")
-    print(corr)
+    # Determine the best performing model overall.
+    if avg_payoffs:
+        best_model = max(avg_payoffs, key=avg_payoffs.get)
+        print("Overall Best Performing Model:")
+        print(f"  Model: {best_model} with an average payoff of {avg_payoffs[best_model]:.3f}\n")
+    else:
+        print("No valid payoff data found.")
+        return
     
-    # Determine play type based on evaluation_type string
-    df["play_type"] = df["evaluation_type"].apply(lambda et: "self-play" if "selfplay" in et else "cross-play")
-    pivot_play = pd.pivot_table(df, values=["raw_agent1", "raw_agent2", "social_welfare"],
-                                  index="play_type", aggfunc=[np.mean, np.std, len])
-    print("\nPerformance by Play Type (Self-play vs Cross-play):")
-    print(pivot_play)
+    # Define the competitive model id (from your provided metadata).
+    COMPETITIVE_MODEL_ID = "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250213-1343:B0Yg8mBH"
+    if best_model == COMPETITIVE_MODEL_ID:
+        print("The competitive model performed the best overall.")
+    else:
+        print("The competitive model did not perform the best overall.")
+    
+    # Breakdown performance by scenario label.
+    print("\nPerformance by Scenario Type:")
+    for label, model_dict in label_payoffs.items():
+        print(f"\nScenario Label: {label}")
+        for model, payoffs in model_dict.items():
+            mean = sum(payoffs) / len(payoffs)
+            stdev = statistics.stdev(payoffs) if len(payoffs) > 1 else 0.0
+            print(f"  Model: {model}")
+            print(f"    Scenarios: {len(payoffs)}")
+            print(f"    Average payoff: {mean:.3f}")
+            print(f"    Std Dev: {stdev:.3f}")
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Analyze aggregated evaluation results to investigate negotiation efficiency and potential inefficiencies."
+        description="Analyze cross-play negotiation scenarios from an aggregated JSON file."
     )
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--file", type=str,
-                       help="Path to a single aggregated evaluation JSON file.")
-    group.add_argument("--folder", type=str,
-                       help="Path to the folder containing run subfolders with aggregated evaluation JSON files.")
+    parser.add_argument("json_file", help="Path to the aggregated JSON file containing scenario data")
     args = parser.parse_args()
-
-    # Load data from file or folder.
-    if args.file:
-        file_path = Path(args.file)
-        if not file_path.exists():
-            print(f"File not found: {file_path}")
-            return
-        df = load_evaluation_data(file_path)
-    else:
-        folder = Path(args.folder)
-        if not folder.exists():
-            print(f"Folder not found: {folder}")
-            return
-        df = load_evaluation_data_from_folder(folder)
     
-    # Compute comprehensive summary.
-    summary = analyze_data(df)
-    print("Comprehensive Summary of Evaluation Results:")
-    print(summary.to_string(index=False))
-    
-    # Save summary analysis to CSV.
-    output_file = Path("evaluation_summary.csv")
-    summary.to_csv(output_file, index=False)
-    print(f"\nSummary saved to {output_file}")
-    
-    # Run additional analyses.
-    print("\nAdditional Analysis:")
-    additional_analysis(df)
+    overall_payoffs, label_payoffs, scenario_count = analyze_scenarios(args.json_file)
+    print_narrative(overall_payoffs, label_payoffs, scenario_count)
 
 if __name__ == "__main__":
-    main() 
+    main()
