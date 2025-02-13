@@ -78,7 +78,6 @@ def simulate_negotiation(model_agent1, model_agent2, system_prompt, v1, v2, m_ro
     # --- Dialogue Rounds ---
     for round_idx in range(m_rounds):
         for agent_name, model in agents:
-            # Build conversation context with system prompt and the transcript so far.
             conversation = [{"role": "system", "content": system_prompt}] + transcript
             current_valuation = v1 if agent_name == "agent1" else v2
             turn_prompt = (
@@ -123,8 +122,7 @@ def simulate_negotiation(model_agent1, model_agent2, system_prompt, v1, v2, m_ro
 
 def evaluate_model_pair(model_name1, model_name2, num_scenarios_per_label=5, seed=None):
     """
-    Evaluate a given pair of models (agent1 and agent2) over held-out scenarios that are evenly
-    spread across 'cooperative', 'conflict', and 'mixed' labels.
+    Evaluate a given pair of models (agent1 and agent2) over held-out scenarios.
     Returns a list of evaluation results.
     """
     if seed is not None:
@@ -136,15 +134,12 @@ def evaluate_model_pair(model_name1, model_name2, num_scenarios_per_label=5, see
     scenario_counts = {label: 0 for label in scenario_labels}
     target = num_scenarios_per_label
     
-    # Keep generating scenarios until we have the target for each label.
     while any(scenario_counts[label] < target for label in scenario_labels):
-        # Generate a scenario similarly to generate_data.py.
         num_objects = np.random.randint(3, 6)
         m_rounds = np.random.randint(3, 7)
         theta = np.random.uniform(0, np.pi)
         v1, v2 = generate_valuations(num_objects, tuple(BASE_RANGE), theta)
         
-        # Compute cosine similarity between v1 and -v2 to determine scenario type.
         cos_sim = compute_cosine_similarity(v1, -v2)
         if cos_sim >= 0.90:
             label = "cooperative"
@@ -156,7 +151,6 @@ def evaluate_model_pair(model_name1, model_name2, num_scenarios_per_label=5, see
         if scenario_counts[label] >= target:
             continue
         
-        # Create system prompt
         system_prompt = create_system_prompt(
             n_objects=num_objects,
             v_agent=v1,
@@ -166,7 +160,6 @@ def evaluate_model_pair(model_name1, model_name2, num_scenarios_per_label=5, see
             q_fraction=Q_FRACTION
         )
         
-        # Simulate negotiation using the given models.
         transcript, claims = simulate_negotiation(model_name1, model_name2, system_prompt, v1, v2, m_rounds)
         agent1_claims = parse_claims(claims["agent1"])
         agent2_claims = parse_claims(claims["agent2"])
@@ -185,8 +178,9 @@ def evaluate_model_pair(model_name1, model_name2, num_scenarios_per_label=5, see
             "model_pair": (model_name1, model_name2),
             "raw_payoffs": [raw1, raw2],
             "discrete_payoffs": [discrete1, discrete2],
-            # To avoid saving very lengthy transcripts, we record just its length.
             "transcript_length": len(transcript),
+            "transcript": transcript,
+            "claims": claims
         }
         results.append(result)
         scenario_counts[label] += 1
@@ -205,12 +199,11 @@ def main():
                         help="Random seed for reproducibility.")
     args = parser.parse_args()
     
-    # Define models with their corresponding names. Adjust the fine-tuned model names as needed.
     models = {
         #"baseline": "gpt-4o-mini-2024-07-18",
-        #"competitive": "gpt-4o-mini-2024-07-18",
-        # "cooperative": "gpt-4o-mini-2024-07-18",
-        "mixed": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "competitive": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250213-1343:B0Yg8mBH",
+        "cooperative": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:cooperative-ft-20250213-1343:B0YdG6xe",
+        "mixed": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250213-1343:B0Yg8mBH",
     }
     
     evaluation_results = {}
@@ -242,14 +235,26 @@ def main():
         results2 = evaluate_model_pair(model_name2, model_name1, num_scenarios_per_label=args.num_scenarios, seed=args.seed)
         evaluation_results[f"{label2}_vs_{label1}"] = results2
     
-    # Save aggregated evaluation results to a JSON file for later analysis.
-    output_dir = Path("evaluation_results")
-    output_dir.mkdir(exist_ok=True)
-    output_file = output_dir / f"evaluation_results_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    with output_file.open("w") as f:
-        json.dump(evaluation_results, f, indent=2)
+    # Create a run-labeled folder (using timestamp) to store results.
+    run_label = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_folder = Path("evaluation") / run_label
+    run_folder.mkdir(parents=True, exist_ok=True)
     
-    print(f"\nEvaluation complete. Results saved to {output_file}")
+    # Save aggregated evaluation results.
+    aggregated_file = run_folder / "aggregated_results.json"
+    with aggregated_file.open("w") as f:
+        json.dump(evaluation_results, f, indent=2)
+    print(f"\nEvaluation complete. Aggregated results saved to {aggregated_file}")
+    
+    # Save the full exchanges (transcripts and claims) as a JSONL file.
+    transcript_file = run_folder / "exchanges.jsonl"
+    with transcript_file.open("w") as f:
+        for eval_type, scenarios in evaluation_results.items():
+            for scenario in scenarios:
+                scenario_record = scenario.copy()
+                scenario_record["evaluation_type"] = eval_type
+                f.write(json.dumps(scenario_record) + "\n")
+    print(f"Exchanges saved to {transcript_file}")
 
 if __name__ == '__main__':
     main() 

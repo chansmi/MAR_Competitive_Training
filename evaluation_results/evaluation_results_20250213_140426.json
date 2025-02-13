@@ -1,0 +1,495 @@
+{
+  "mixed_selfplay": [
+    {
+      "scenario_id": "683bf0f1-062b-475c-93a3-80f0341ef045",
+      "label": "mixed",
+      "num_objects": 4,
+      "num_rounds": 6,
+      "theta": 2.6230997618666145,
+      "cosine_similarity": 0.8685670459911317,
+      "v1": [
+        8.159571225823036,
+        -4.807757718964125,
+        7.920825131700511,
+        0.19676956169430992
+      ],
+      "v2": [
+        -7.0827095747677316,
+        8.428685891307477,
+        -4.215964984342666,
+        -3.672797894914788
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        4.896750723412138,
+        -3.60788736049379
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 28
+    },
+    {
+      "scenario_id": "963fd17a-c068-4e2a-ac57-a629deeeb39f",
+      "label": "mixed",
+      "num_objects": 3,
+      "num_rounds": 6,
+      "theta": 0.7065972274398042,
+      "cosine_similarity": -0.7605755233007764,
+      "v1": [
+        -3.157240513534969,
+        7.259721881701555,
+        7.213316858396821
+      ],
+      "v2": [
+        -3.736415015047964,
+        10.030472624301968,
+        0.36399358242643576
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        0.44941791566344147,
+        10.212469415515185
+      ],
+      "discrete_payoffs": [
+        -1,
+        1
+      ],
+      "transcript_length": 28
+    },
+    {
+      "scenario_id": "c664f874-aef2-4984-9791-c66b23e7d467",
+      "label": "cooperative",
+      "num_objects": 4,
+      "num_rounds": 5,
+      "theta": 2.8361237390662923,
+      "cosine_similarity": 0.9537060358753954,
+      "v1": [
+        -6.03517990588456,
+        7.218738293779843,
+        1.9939491395644127,
+        7.211898743890231
+      ],
+      "v2": [
+        6.2315091171280095,
+        -6.97571768675471,
+        -5.199155822523237,
+        -5.4769819540274325
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        4.898813538701143,
+        -5.524121030682011
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 24
+    },
+    {
+      "scenario_id": "77673dd0-8886-44b8-a9c0-e38688aff24a",
+      "label": "mixed",
+      "num_objects": 5,
+      "num_rounds": 3,
+      "theta": 1.5021935329025775,
+      "cosine_similarity": -0.0685489951700687,
+      "v1": [
+        4.4921500033652295,
+        7.68301951209078,
+        2.874087750264911,
+        0.9814583724804371,
+        5.4172042059653
+      ],
+      "v2": [
+        -1.3241963047697005,
+        1.0353502203921674,
+        2.577142454471133,
+        10.194363871234518,
+        -2.094225134975661
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        9.128525167720554,
+        6.373990815757163
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 16
+    },
+    {
+      "scenario_id": "076df422-584d-4c91-b084-a9261ab58c70",
+      "label": "mixed",
+      "num_objects": 5,
+      "num_rounds": 6,
+      "theta": 1.7520413074410313,
+      "cosine_similarity": 0.18025430071992243,
+      "v1": [
+        9.512980515784664,
+        -6.501205987302159,
+        4.589562568307805,
+        -4.389191626869382,
+        -2.314947814207231
+      ],
+      "v2": [
+        0.9980054689489115,
+        5.994101697695134,
+        -6.6800796159409375,
+        -1.2199688298769664,
+        -9.767982953086204
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        8.455692079400261,
+        -2.8399140017569193
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 28
+    },
+    {
+      "scenario_id": "601bff28-c2ae-4801-99ea-3991639886d2",
+      "label": "cooperative",
+      "num_objects": 3,
+      "num_rounds": 5,
+      "theta": 3.074278565730357,
+      "cosine_similarity": 0.997735262144058,
+      "v1": [
+        7.714854120671191,
+        -1.5724529461246695,
+        -6.6017204824446125
+      ],
+      "v2": [
+        -7.304525461455642,
+        1.3300070723663662,
+        7.102765987257627
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        7.714854120671191,
+        8.432773059623994
+      ],
+      "discrete_payoffs": [
+        -1,
+        1
+      ],
+      "transcript_length": 24
+    },
+    {
+      "scenario_id": "123c6208-fd62-4a38-ab9f-288636bf5f77",
+      "label": "mixed",
+      "num_objects": 5,
+      "num_rounds": 5,
+      "theta": 2.5864576862934077,
+      "cosine_similarity": 0.8498293124165046,
+      "v1": [
+        -2.6622727062244667,
+        6.1440386407139735,
+        -9.025692903236813,
+        8.377145258229156,
+        5.901796318946992
+      ],
+      "v2": [
+        -2.4146354060090056,
+        -0.27323686698672667,
+        10.512877000460263,
+        -10.014724801970965,
+        -3.819343322717832
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        13.152678531130174,
+        10.44456778371358
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 24
+    },
+    {
+      "scenario_id": "5a98573a-bddd-4b52-920e-646b21355a52",
+      "label": "conflict",
+      "num_objects": 4,
+      "num_rounds": 4,
+      "theta": 0.13060175501995086,
+      "cosine_similarity": -0.9914837061966283,
+      "v1": [
+        -4.736359562897321,
+        -2.3360584935457873,
+        -0.8535969298962853,
+        9.988514464114328
+      ],
+      "v2": [
+        -4.153838551244217,
+        -3.1987542253947625,
+        -1.8965816330694434,
+        9.86437503938724
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        -2.666029411816882,
+        -1.6809512820826744
+      ],
+      "discrete_payoffs": [
+        -1,
+        1
+      ],
+      "transcript_length": 20
+    },
+    {
+      "scenario_id": "b2700aa6-5893-4a43-a94d-5ead8968d0d8",
+      "label": "conflict",
+      "num_objects": 4,
+      "num_rounds": 3,
+      "theta": 0.19380261856243106,
+      "cosine_similarity": -0.9812789786714428,
+      "v1": [
+        1.4732393634191099,
+        -4.146667193904017,
+        8.812839249960867,
+        -9.12093228010062
+      ],
+      "v2": [
+        3.7404675728606227,
+        -3.7922358957608115,
+        9.348926982538527,
+        -8.027965985553505
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        -0.8840169641409834,
+        -5.468987142902932
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 16
+    },
+    {
+      "scenario_id": "4a30844d-c2d9-4d5a-80a6-7dea130d9cd6",
+      "label": "cooperative",
+      "num_objects": 5,
+      "num_rounds": 4,
+      "theta": 2.9327996640165837,
+      "cosine_similarity": 0.9782818155018332,
+      "v1": [
+        -8.838252588846382,
+        1.017356322303502,
+        4.938293287056763,
+        0.49765750320856617,
+        8.080551639575146
+      ],
+      "v2": [
+        8.335396865209596,
+        0.4372910411051072,
+        -6.619941650586055,
+        0.8062766612481878,
+        -7.411859903107764
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        -6.120277193713718,
+        -9.881401356671592
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 20
+    },
+    {
+      "scenario_id": "f24b58e1-e35a-46f0-993d-f4633399709f",
+      "label": "conflict",
+      "num_objects": 3,
+      "num_rounds": 6,
+      "theta": 0.3433426907032641,
+      "cosine_similarity": -0.941634656433765,
+      "v1": [
+        2.678647796570952,
+        -8.479584606394308,
+        -1.755087211090982
+      ],
+      "v2": [
+        5.173978656250469,
+        -7.438321622795478,
+        -0.2452682900961738
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        -0.20788165640275302,
+        -6.267461103780947
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 28
+    },
+    {
+      "scenario_id": "b1f2db46-3cd5-4bdf-960e-0294e18a2963",
+      "label": "conflict",
+      "num_objects": 3,
+      "num_rounds": 5,
+      "theta": 0.3349451100935738,
+      "cosine_similarity": -0.9444283543188965,
+      "v1": [
+        -9.410589086777694,
+        8.887165576332412,
+        -7.123221597022377
+      ],
+      "v2": [
+        -12.125643051364497,
+        7.830470119441815,
+        -3.151777777864116
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        -10.750408491205778,
+        0.38172864092839576
+      ],
+      "discrete_payoffs": [
+        -1,
+        1
+      ],
+      "transcript_length": 24
+    },
+    {
+      "scenario_id": "48fc162f-852f-46ab-a5ba-b912844e0555",
+      "label": "cooperative",
+      "num_objects": 3,
+      "num_rounds": 5,
+      "theta": 3.074235739979024,
+      "cosine_similarity": 0.9977323806292987,
+      "v1": [
+        -2.4288241400994437,
+        -1.5752827306622286,
+        8.261124076657854
+      ],
+      "v2": [
+        2.0729819022813807,
+        1.1360832013407345,
+        -8.428459787377157
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        -2.4288241400994437,
+        -7.292376586036423
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 24
+    },
+    {
+      "scenario_id": "2a2a30a7-0bff-4a4d-b148-22097c70d2ae",
+      "label": "conflict",
+      "num_objects": 3,
+      "num_rounds": 4,
+      "theta": 0.3539512433864582,
+      "cosine_similarity": -0.9380105107927136,
+      "v1": [
+        3.3040561344584307,
+        5.656231442365833,
+        -4.02414799856359
+      ],
+      "v2": [
+        0.6937561566334658,
+        6.271423194288025,
+        -4.392204651070228
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        2.7060399957680934,
+        -0.6282465269631079
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 20
+    },
+    {
+      "scenario_id": "2a36360c-bc33-4437-965f-0f37eed94e9c",
+      "label": "cooperative",
+      "num_objects": 4,
+      "num_rounds": 6,
+      "theta": 2.6960679907197838,
+      "cosine_similarity": 0.902384695908272,
+      "v1": [
+        -0.02618971711828788,
+        5.351913157864945,
+        6.430244349607969,
+        -2.2545794541839848
+      ],
+      "v2": [
+        3.637742621620291,
+        -5.050703682496807,
+        -5.9206079989993,
+        1.1306870098087556
+      ],
+      "model_pair": [
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
+        "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd"
+      ],
+      "raw_payoffs": [
+        -1.1534794442102803,
+        -10.40596817659173
+      ],
+      "discrete_payoffs": [
+        1,
+        -1
+      ],
+      "transcript_length": 28
+    }
+  ]
+}
