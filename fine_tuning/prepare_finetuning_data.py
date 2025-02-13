@@ -217,7 +217,6 @@ def generate_single_transcript():
 def main():
     """
     Main function that generates negotiation transcripts in parallel.
-    (The unchanged parts of the function have been omitted for brevity.)
     """
     parser = argparse.ArgumentParser(
         description="Generate negotiation transcripts."
@@ -227,31 +226,30 @@ def main():
         type=str,
         choices=["cooperative", "conflict", "mixed", "all"],
         default="all",
-        help="Generate only transcripts of the given category. (default: all)"
+        help="Generate only transcripts of the given category (default: all)"
     )
     args = parser.parse_args()
 
     # Prepare output directory in the 'clean' subfolder
     out_dir = Path("data") / "finetuning" / "clean"
     out_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Define target number of transcripts per category
+    target = NUM_TRANSCRIPTS
     if args.category != "all":
         file_path = out_dir / f"{args.category}_clean.jsonl"
-        file_path.write_text("")
-        target = NUM_TRANSCRIPTS
+        file_path.write_text("")  # Reset the file for the specified category
         counts = {args.category: 0}
     else:
-        target = NUM_TRANSCRIPTS
         counts = {"cooperative": 0, "conflict": 0, "mixed": 0}
         for cat in counts:
             file_path = out_dir / f"{cat}_clean.jsonl"
             file_path.write_text("")
-    
 
     # Use a ThreadPoolExecutor to parallelize transcript generation.
-    max_workers = 8  # Adjust as needed.
-    futures = []  # Initialize as a list.
+    max_workers = 8
+    futures = []  # List of futures
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Continuously submit tasks until targets are met.
         while True:
             if args.category != "all":
                 if counts[args.category] >= target:
@@ -261,15 +259,16 @@ def main():
                     break
 
             futures.append(executor.submit(generate_single_transcript))
-            # Wait for at least one future to complete.
-            done, not_done = concurrent.futures.wait(futures, timeout=1, return_when=concurrent.futures.FIRST_COMPLETED)
-            # Reassign futures to the list of not-done tasks.
+            done, not_done = concurrent.futures.wait(
+                futures, timeout=1, return_when=concurrent.futures.FIRST_COMPLETED
+            )
             futures = list(not_done)
             for future in done:
                 result = future.result()
                 if result is None:
                     continue
                 label, transcript, cos_sim, metadata, raw1, raw2 = result
+                # If a single category is specified and the transcript label doesn't match, skip it.
                 if args.category != "all" and label != args.category:
                     continue
                 save_transcript(label, transcript, cos_sim, metadata)

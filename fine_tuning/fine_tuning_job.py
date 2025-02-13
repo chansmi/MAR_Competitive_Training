@@ -16,7 +16,7 @@ def create_finetuning_job(training_file_id: str, suffix: str) -> None:
             "type": "supervised",
             "supervised": {
                 "hyperparameters": {"n_epochs": 5},
-                "batch_size": 16
+                "batch_size": 8,
             }
         }
     )
