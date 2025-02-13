@@ -1,285 +1,93 @@
-from pathlib import Path
-import os
 import json
-import numpy as np
-import re
-import yaml
-import math
-import uuid
-import datetime
-import time
 import argparse
-import concurrent.futures
+from pathlib import Path
 
-from openai import OpenAI
-client = OpenAI()
-
-from dotenv import load_dotenv
-load_dotenv()
-
-from utils.valuation_generation import generate_valuations
-from utils.prompt_templates import create_system_prompt
-
-# Load configuration from config/config.yaml using Path
-config_path = Path("config") / "config.yaml"
-with config_path.open("r") as f:
-    config = yaml.safe_load(f)
-
-# These parameters are defined in the config but we override some with randomness.
-P_FRACTION = config.get("p_fraction", "1/4")
-Q_FRACTION = config.get("q_fraction", "1/2")
-BASE_RANGE = config.get("valuation_range", [-10, 10])
-NUM_TRANSCRIPTS = config.get("num_transcripts", 100)
-
-# Set API key for OpenAI client
-os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
-
-def parse_claims(claim_text):
-    """Parse a claim message and return a list of 0-indexed object indices."""
-    numbers = re.findall(r'\d+', claim_text)
-    return [int(num) - 1 for num in numbers]
-
-def compute_cosine_similarity(v1, v2):
-    """Compute cosine similarity between two vectors."""
-    norm1 = np.linalg.norm(v1)
-    norm2 = np.linalg.norm(v2)
-    return np.dot(v1, v2) / (norm1 * norm2) if norm1 and norm2 else 0
-
-def compute_payoffs(v1, v2, claims_agent1, claims_agent2, p=0.25, q=0.5):
+def clean_messages(messages: list) -> list:
     """
-    Compute raw payoffs over all objects, then discretize the outcome:
-      - If agent1's raw payoff > agent2's, the discrete outcome is (1, -1)
-      - If agent1's raw payoff < agent2's, the discrete outcome is (-1, 1)
-      - Otherwise, (0, 0)
-    Returns:
-      (discrete_payoff_agent1, discrete_payoff_agent2, raw_payoff_agent1, raw_payoff_agent2)
+    Processes the list of messages and adds a weight field as follows:
+      - For each assistant message from agent1, assign weight 0.5,
+        except for the final such message (the final claim) which gets weight 1.
+      - For each assistant message from agent2, assign weight 0.
+    Other messages are left unchanged.
     """
-    raw_payoff_agent1 = 0
-    raw_payoff_agent2 = 0
-    for i in range(len(v1)):
-        a1_claim = (i in claims_agent1)
-        a2_claim = (i in claims_agent2)
-        if a1_claim and not a2_claim:
-            raw_payoff_agent1 += v1[i]
-        elif a2_claim and not a1_claim:
-            raw_payoff_agent2 += v2[i]
-        elif a1_claim and a2_claim:
-            raw_payoff_agent1 += p * v1[i]
-            raw_payoff_agent2 += p * v2[i]
-        else:
-            raw_payoff_agent1 += q * v1[i]
-            raw_payoff_agent2 += q * v2[i]
-    if raw_payoff_agent1 > raw_payoff_agent2:
-        discrete = (1, -1)
-    elif raw_payoff_agent1 < raw_payoff_agent2:
-        discrete = (-1, 1)
-    else:
-        discrete = (0, 0)
-    return discrete[0], discrete[1], raw_payoff_agent1, raw_payoff_agent2
+    # Identify indices for agent1 assistant messages
+    agent1_indices = [
+        i for i, msg in enumerate(messages)
+        if msg.get("role") == "assistant" and msg.get("speaker") == "agent1"
+    ]
+    last_agent1_index = agent1_indices[-1] if agent1_indices else None
 
-def save_transcript(category, transcript, cos_sim, metadata):
-    """
-    Append a transcript (with enriched metadata as JSON) to the appropriate clean dataset file.
-    """
-    # Save transcripts in the 'clean' subfolder
-    out_dir = Path("data") / "finetuning" / "clean"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    # Use a suffix (_clean) for the filename; for example: cooperative_clean.jsonl
-    file_path = out_dir / f"{category}_clean.jsonl"
-    data = {
-        "cosine_similarity": cos_sim,
-        "messages": transcript,
-    }
-    data.update(metadata)
-    with file_path.open("a") as f:
-        json.dump(data, f)
-        f.write("\n")
+    cleaned = []
+    for i, msg in enumerate(messages):
+        new_msg = dict(msg)  # Create a shallow copy
+        if new_msg.get("role") == "assistant":
+            if new_msg.get("speaker") == "agent1":
+                new_msg["weight"] = 1 if i == last_agent1_index else 0.5
+            elif new_msg.get("speaker") == "agent2":
+                new_msg["weight"] = 0
+        cleaned.append(new_msg)
+    return cleaned
 
-def generate_negotiation_transcript(system_prompt, valuations, m_rounds, model="gpt-4o-mini-2024-07-18"):
+def process_file(input_path: Path, output_path: Path) -> None:
     """
-    Generates a negotiation transcript between two agents.
-    This version alternates between user and assistant messages while preserving agent tracking.
-    Each turn includes a user prompt (with a tag for the agent) and the assistant response.
+    Reads an input JSONL file containing transcripts with a 'messages' key.
+    For each transcript, cleans the messages and writes a new JSON object 
+    (with only the "messages" field) to the output file.
     """
-    transcript = []  # Each message is a dict with keys: role, content, speaker
-    agents = ["agent1", "agent2"]
-    np.random.shuffle(agents)
-    v1, v2 = valuations
+    with input_path.open("r", encoding="utf-8") as infile, \
+         output_path.open("w", encoding="utf-8") as outfile:
+        for line in infile:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError as e:
+                print(f"Skipping invalid JSON line:\n{line}\nError: {e}")
+                continue
+            if "messages" not in data:
+                print(f"Skipping line with no 'messages' key:\n{line}")
+                continue
 
-    # --- Dialogue Rounds ---
-    for round_idx in range(m_rounds):
-        for agent in agents:
-            conversation = [{"role": "system", "content": system_prompt}]
-            conversation.extend(transcript)
-            current_valuation = v1 if agent == "agent1" else v2
-            turn_prompt = (
-                f"Round {round_idx+1}: You are {agent}. Your valuation is: "
-                f"{np.array2string(current_valuation, precision=2)}. Please send your message."
-            )
-            user_message = {"role": "user", "content": turn_prompt, "speaker": agent}
-            conversation.append(user_message)
-            transcript.append(user_message)
-            
-            response = client.chat.completions.create(
-                model=model,
-                store=True,
-                messages=conversation,
-                temperature=0.7,
-            )
-            assistant_message_text = response.choices[0].message.content
-            assistant_message = {"role": "assistant", "content": f"[{agent}] {assistant_message_text}", "speaker": agent}
-            transcript.append(assistant_message)
-
-    # --- Final Claim Round ---
-    final_claims = {}
-    for agent in agents:
-        conversation = [{"role": "system", "content": system_prompt}]
-        conversation.extend(transcript)
-        claim_prompt = f"{agent}, please list the object numbers you claim."
-        user_claim = {"role": "user", "content": claim_prompt, "speaker": agent}
-        conversation.append(user_claim)
-        transcript.append(user_claim)
-        response = client.chat.completions.create(
-            model=model,
-            store=True,
-            messages=conversation,
-            temperature=0.7,
-        )
-        claim_text = response.choices[0].message.content
-        assistant_claim = {"role": "assistant", "content": f"[{agent}] {claim_text}", "speaker": agent}
-        transcript.append(assistant_claim)
-        final_claims[agent] = claim_text
-    
-    return transcript, final_claims
-
-def filter_transcript(raw_payoff_agent1, raw_payoff_agent2, v1):
-    """
-    Filter transcripts based on agent1's performance.
-    We compute a dynamic threshold for agent1 as:
-        agent1_threshold = 0.5 * sum(max(v1[i], 0) for i in 1...n)
-    The transcript is accepted only if agent1's raw payoff >= agent1_threshold.
-    """
-    threshold = 0.5 * sum(max(val, 0) for val in v1)
-    return raw_payoff_agent1 >= threshold
-
-def generate_single_transcript():
-    """
-    Generate a single transcript and return a tuple:
-    (label, transcript, cos_sim, metadata, raw_payoff_agent1, raw_payoff_agent2)
-    or None if the transcript does not pass the filter.
-    """
-    # Choose a random number of objects between 3 and 5.
-    num_objects = np.random.randint(3, 6)
-    # Choose a random number of rounds between 3 and 6.
-    m_rounds = np.random.randint(3, 7)
-    # Generate a random theta in [0, π]
-    theta = np.random.uniform(0, np.pi)
-    # Generate valuations for the chosen number of objects.
-    v1, v2 = generate_valuations(num_objects, tuple(BASE_RANGE), theta)
-    # Compute cosine similarity between v1 and -v2.
-    cos_sim = compute_cosine_similarity(v1, -v2)
-    # Label the transcript.
-    if cos_sim >= 0.90:
-        label = "cooperative"
-    elif cos_sim <= -0.90:
-        label = "conflict"
-    else:
-        label = "mixed"
-    system_prompt = create_system_prompt(
-        n_objects=num_objects,
-        v_agent=v1,
-        m_rounds=m_rounds,
-        game_context=f"{label.capitalize()} Negotiation",
-        p_fraction=P_FRACTION,
-        q_fraction=Q_FRACTION
-    )
-    transcript, claims = generate_negotiation_transcript(system_prompt, (v1, v2), m_rounds)
-    agent1_claims = parse_claims(claims["agent1"])
-    agent2_claims = parse_claims(claims["agent2"])
-    discrete1, discrete2, raw1, raw2 = compute_payoffs(v1, v2, agent1_claims, agent2_claims)
-    if not filter_transcript(raw1, raw2, v1):
-        return None
-    transcript_id = str(uuid.uuid4())
-    timestamp = datetime.datetime.now().isoformat()
-    metadata = {
-        "transcript_id": transcript_id,
-        "timestamp": timestamp,
-        "v1": v1.tolist() if isinstance(v1, np.ndarray) else v1,
-        "v2": v2.tolist() if isinstance(v2, np.ndarray) else v2,
-        "theta": theta,
-        "raw_payoffs": [raw1, raw2],
-        "discrete_payoffs": [discrete1, discrete2],
-        "num_objects": num_objects,
-        "num_rounds": m_rounds
-    }
-    return (label, transcript, cos_sim, metadata, raw1, raw2)
+            cleaned_messages = clean_messages(data["messages"])
+            cleaned_data = {"messages": cleaned_messages}
+            outfile.write(json.dumps(cleaned_data))
+            outfile.write("\n")
 
 def main():
-    """
-    Main function that generates negotiation transcripts in parallel.
-    """
     parser = argparse.ArgumentParser(
-        description="Generate negotiation transcripts."
+        description="Clean existing finetuning JSONL data for training compatibility."
     )
     parser.add_argument(
-        "--category",
+        "input_file",
         type=str,
-        choices=["cooperative", "conflict", "mixed", "all"],
-        default="all",
-        help="Generate only transcripts of the given category (default: all)"
+        help="Path to the input JSONL file to clean (e.g., data/finetuning/mixed.jsonl)"
+    )
+    parser.add_argument(
+        "--output_file",
+        type=str,
+        default=None,
+        help="Path to the output cleaned JSONL file. If not provided, it will be saved in the 'clean' subfolder with a '_clean' suffix."
     )
     args = parser.parse_args()
 
-    # Prepare output directory in the 'clean' subfolder
-    out_dir = Path("data") / "finetuning" / "clean"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Define target number of transcripts per category
-    target = NUM_TRANSCRIPTS
-    if args.category != "all":
-        file_path = out_dir / f"{args.category}_clean.jsonl"
-        file_path.write_text("")  # Reset the file for the specified category
-        counts = {args.category: 0}
+    input_path = Path(args.input_file)
+    if not input_path.exists():
+        print(f"Input file '{input_path}' does not exist.")
+        return
+
+    # Determine the output path
+    if args.output_file:
+        output_path = Path(args.output_file)
     else:
-        counts = {"cooperative": 0, "conflict": 0, "mixed": 0}
-        for cat in counts:
-            file_path = out_dir / f"{cat}_clean.jsonl"
-            file_path.write_text("")
+        # Create a 'clean' subfolder next to the input file if it doesn't exist.
+        output_dir = input_path.parent / "clean"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_filename = input_path.stem + "_clean.jsonl"
+        output_path = output_dir / output_filename
 
-    # Use a ThreadPoolExecutor to parallelize transcript generation.
-    max_workers = 8
-    futures = []  # List of futures
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        while True:
-            if args.category != "all":
-                if counts[args.category] >= target:
-                    break
-            else:
-                if all(counts[cat] >= target for cat in counts):
-                    break
+    process_file(input_path, output_path)
+    print(f"Cleaned file written to: {output_path}")
 
-            futures.append(executor.submit(generate_single_transcript))
-            done, not_done = concurrent.futures.wait(
-                futures, timeout=1, return_when=concurrent.futures.FIRST_COMPLETED
-            )
-            futures = list(not_done)
-            for future in done:
-                result = future.result()
-                if result is None:
-                    continue
-                label, transcript, cos_sim, metadata, raw1, raw2 = result
-                # If a single category is specified and the transcript label doesn't match, skip it.
-                if args.category != "all" and label != args.category:
-                    continue
-                save_transcript(label, transcript, cos_sim, metadata)
-                if args.category != "all":
-                    counts[args.category] += 1
-                    print(f"Saved {label} transcript {counts[args.category]} / {target} "
-                          f"with raw payoffs: ({raw1}, {raw2}), cosine similarity: {cos_sim:.2f}")
-                else:
-                    counts[label] += 1
-                    print(f"Saved {label} transcript {counts[label]} / {target} "
-                          f"with raw payoffs: ({raw1}, {raw2}), cosine similarity: {cos_sim:.2f}")
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
