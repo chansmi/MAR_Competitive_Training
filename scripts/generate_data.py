@@ -16,9 +16,8 @@ client = OpenAI()
 from dotenv import load_dotenv
 load_dotenv()
 
-from utils.valuation_generation import generate_valuations
 from utils.prompt_templates import create_system_prompt
-
+from utils.valuation_generation import generate_valuations
 # Load configuration from config/config.yaml using Path
 config_path = Path("config") / "config.yaml"
 with config_path.open("r") as f:
@@ -29,7 +28,7 @@ with config_path.open("r") as f:
 P_FRACTION = config.get("p_fraction", "1/4")
 Q_FRACTION = config.get("q_fraction", "1/2")
 BASE_RANGE = config.get("valuation_range", [-10, 10])
-NUM_TRANSCRIPTS = config.get("num_transcripts", 25) #Change
+NUM_TRANSCRIPTS = config.get("num_transcripts", 75) #Change
 
 # Set API key for OpenAI client
 os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')

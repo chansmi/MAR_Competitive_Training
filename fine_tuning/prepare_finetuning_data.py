@@ -78,10 +78,14 @@ def compute_payoffs(v1, v2, claims_agent1, claims_agent2, p=0.25, q=0.5):
     return discrete[0], discrete[1], raw_payoff_agent1, raw_payoff_agent2
 
 def save_transcript(category, transcript, cos_sim, metadata):
-    """Append a transcript (with enriched metadata as JSON) to the appropriate dataset file."""
-    out_dir = Path("data") / "finetuning"
+    """
+    Append a transcript (with enriched metadata as JSON) to the appropriate clean dataset file.
+    """
+    # Save transcripts in the 'clean' subfolder
+    out_dir = Path("data") / "finetuning" / "clean"
     out_dir.mkdir(parents=True, exist_ok=True)
-    file_path = out_dir / f"{category}.jsonl"
+    # Use a suffix (_clean) for the filename; for example: cooperative_clean.jsonl
+    file_path = out_dir / f"{category}_clean.jsonl"
     data = {
         "cosine_similarity": cos_sim,
         "messages": transcript,
@@ -213,16 +217,7 @@ def generate_single_transcript():
 def main():
     """
     Main function that generates negotiation transcripts in parallel.
-    - Uses a ThreadPoolExecutor to speed up execution.
-    - For each transcript, a random number of objects (between 3 and 5) and rounds (between 3 and 6) is chosen.
-    - Valuation vectors are generated via controlled rotation (using a random theta).
-    - Cosine similarity between v1 and -v2 is computed.
-    - Transcripts are labeled as:
-        * Cooperative: cosine similarity >= 0.90 (theta near π)
-        * Conflict: cosine similarity <= -0.90 (theta near 0)
-        * Mixed: all others (i.e., not extreme)
-    - Only transcripts where agent1's raw payoff is at or above the computed threshold are accepted.
-    - Accepted transcripts (with enriched metadata) are saved as JSONL files.
+    (The unchanged parts of the function have been omitted for brevity.)
     """
     parser = argparse.ArgumentParser(
         description="Generate negotiation transcripts."
@@ -236,11 +231,11 @@ def main():
     )
     args = parser.parse_args()
 
-    # Prepare output directory.
-    out_dir = Path("data") / "finetuning"
+    # Prepare output directory in the 'clean' subfolder
+    out_dir = Path("data") / "finetuning" / "clean"
     out_dir.mkdir(parents=True, exist_ok=True)
     if args.category != "all":
-        file_path = out_dir / f"{args.category}.jsonl"
+        file_path = out_dir / f"{args.category}_clean.jsonl"
         file_path.write_text("")
         target = NUM_TRANSCRIPTS
         counts = {args.category: 0}
@@ -248,8 +243,9 @@ def main():
         target = NUM_TRANSCRIPTS
         counts = {"cooperative": 0, "conflict": 0, "mixed": 0}
         for cat in counts:
-            file_path = out_dir / f"{cat}.jsonl"
+            file_path = out_dir / f"{cat}_clean.jsonl"
             file_path.write_text("")
+    
 
     # Use a ThreadPoolExecutor to parallelize transcript generation.
     max_workers = 8  # Adjust as needed.
