@@ -25,7 +25,7 @@ def clean_messages(messages: list) -> list:
         new_msg = dict(msg)  # Create a shallow copy
         if new_msg.get("role") == "assistant":
             if new_msg.get("speaker") == "agent1":
-                new_msg["weight"] = 1 if i == last_agent1_index else 0.5
+                new_msg["weight"] = 1 if i == last_agent1_index else 1
             elif new_msg.get("speaker") == "agent2":
                 new_msg["weight"] = 0
         # Remove the "speaker" key as it's not allowed in the training file.

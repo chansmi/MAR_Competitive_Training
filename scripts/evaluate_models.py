@@ -207,10 +207,10 @@ def main():
     
     # Define models with their corresponding names. Adjust the fine-tuned model names as needed.
     models = {
-        "baseline": "gpt-4o-mini-2024-07-18",
-        # "competitive": "gpt-4o-mini-2024-07-18",
+        #"baseline": "gpt-4o-mini-2024-07-18",
+        #"competitive": "gpt-4o-mini-2024-07-18",
         # "cooperative": "gpt-4o-mini-2024-07-18",
-        # "mixed": "gpt-4o-mini-2024-07-18",
+        "mixed": "ft:gpt-4o-mini-2024-07-18:cooperative-ai-foundation:mixed-ft-20250211-1344:AzpdM0Wd",
     }
     
     evaluation_results = {}
